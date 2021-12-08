@@ -24,6 +24,14 @@ const urlDatabase = {
   "9sm5xk": "http://www.google.com"
 };
 
+//responsible for getting register page
+app.get('/register', (req, res) => {
+  const templateVars = { username: req.cookies["username"], urls: urlDatabase };
+  res.render('register', templateVars)
+});
+
+// app.post()
+
 app.get("/", (req, res) => {
   res.send("Hello!");
 });
