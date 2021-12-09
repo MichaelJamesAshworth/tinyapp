@@ -10,9 +10,9 @@
         <a class="nav-item nav-link" href="/urls/new">Create New URL</a>
       </div>
     </div>
-    <% if (username) { %>
+    <% if (userIDFromCookies) { %>
       <form class="form-inline" action="/logout" method="POST">
-      <label class ="text-white mr-2">Signed in as: <%= username %></label>
+      <label class ="text-white mr-2">Signed in as: <%= userIDFromCookies.email %></label>
       <button type="submit" class="btn btn-primary">Logout</button>
       </form>
     <% } else { %>
@@ -20,6 +20,7 @@
       <div class="form-group mb-2">
         <input class="form-control" type="text" name="username" placeholder="username" style="width: 300px; margin: 1em">
         <button type="submit" class="btn btn-primary">Login</button>
+        <a href='/register'class="ml-2 btn btn-primary">Register</a>
       </div>
     </form>
   <% } %>
