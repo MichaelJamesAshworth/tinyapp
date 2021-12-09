@@ -19,6 +19,17 @@ characters.length));
   return result;
 }
 
+//Helper function that looks for the email in the userDatabase
+const searchForUserEmail = (email, userDatabase) => {
+  for (let userID in userDatabase) {
+    const user = userDatabase[userID];
+    
+    if (user.email === email) {
+      return user;
+    }
+  }
+  return false;
+}
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
   "9sm5xk": "http://www.google.com"
@@ -28,7 +39,7 @@ const userDatabase = {
   "userID": {
     id: "userID",
     email: "user@example.com",
-    password: "purple-monkey-dinosaur"
+    password: "test"
   },
   "userID2": {
     id: "userID2",
@@ -57,27 +68,16 @@ app.get("/urls/new", (req, res) => {
   res.render("urls_new", templateVars);
 });
 
-app.get("/urls/:shortURL", (req, res) => {
-  let userIDFromCookies = userDatabase[req.cookies["user_id"]];
-  const templateVars = { userIDFromCookies, shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL] };
-  res.render("urls_show", templateVars);
-});
-
-app.get("/u/:shortURL", (req, res) => {
-  const longURL = urlDatabase[req.params.shortURL];
-  res.redirect(longURL);
-});
-
-app.post('/login', (req, res) => {
-  res.cookie("user_id", req.body.username);
-  console.log(req.body.username);
-  res.redirect('/urls');
-});
-
-app.post('/logout', (req, res) => {
-  res.clearCookie("user_id");
-  res.redirect('/urls');
-});
+  app.get("/urls/:shortURL", (req, res) => {
+    let userIDFromCookies = userDatabase[req.cookies["user_id"]];
+    const templateVars = { userIDFromCookies, shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL] };
+    res.render("urls_show", templateVars);
+  });
+  
+  app.get("/u/:shortURL", (req, res) => {
+    const longURL = urlDatabase[req.params.shortURL];
+    res.redirect(longURL);
+  });
 
 app.post('/urls/:id', (req, res) => {
   let shortURL = req.params.id;
@@ -127,14 +127,33 @@ app.post('/register', (req, res) => {
   }
   userDatabase[userID] = newUser;
   res.cookie('user_id', userID);
-  console.log(userDatabase);
-  console.log(userID);
   res.redirect('/urls');
 });
 
-const registerValidation = (email, password, userDatabase) => {
+app.get('/login', (req, res) => {
+  let userIDFromCookies = userDatabase[req.cookies["user_id"]];
+  const templateVars = { userIDFromCookies, urls: urlDatabase };
+  res.render('login', templateVars);
+});
 
-};
+app.post('/login', (req, res) => {
+  const email = req.body.email;
+  const password = req.body.password;
+
+  const user = searchForUserEmail(email, userDatabase)
+  // user is authenticated ==> log the user
+  if (user && user.password === password) {
+    // asking the browser to store the user id in the cookies
+    res.cookie('user_id', user.id);
+    return res.redirect('/urls');
+  }
+  res.status(403).send('Oops! It looks like you entererd the wrong login credentials!');
+});
+
+app.post('/logout', (req, res) => {
+  res.clearCookie("user_id");
+  res.redirect('/urls');
+});
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
