@@ -3,6 +3,7 @@ const app = express();
 const PORT = 8080;
 const bodyParser = require("body-parser");
 const cookieParser = require('cookie-parser');
+const bcrypt = require('bcryptjs');
 
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(cookieParser());
@@ -48,22 +49,12 @@ characters.length));
 const searchForUserEmail = (email, userDatabase) => {
   for (let userID in userDatabase) {
     const user = userDatabase[userID];
-    
     if (user.email === email) {
       return user;
     }
   }
-  return false;
+  return undefined;
 };
-
-//Helper function that determines if a user is authenticated or not
-const authenticateUser = (email, password, userDatabase) => {
-  const user = searchForUserEmail(email, userDatabase);
-  if (user && user.password === password) {
-    return user;
-  }
-  return false;
-}
 
 // Helper function that returns a object of filtered URLs based on the 
 // userID that is currently logged in
@@ -170,14 +161,16 @@ app.get('/register', (req, res) => {
   res.render('register', templateVars);
 });
 
+//responsible for handling the register page data
 app.post('/register', (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
+  const hashedPassword = bcrypt.hashSync(password, 10);
   let userID = generateRandomString();
   const newUser = {
     id: userID,
     email,
-    password
+    password: hashedPassword
   };
 
   for (let userID in userDatabase) {
@@ -202,13 +195,17 @@ app.get('/login', (req, res) => {
   res.render('login', templateVars);
 });
 
+// responsible for handling data from the login page
 app.post('/login', (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
-
-  const user = authenticateUser(email, password, userDatabase)
+  // active user is calling searchForUserEmail to determine the active user
+  const user = searchForUserEmail(email, userDatabase);
+  const hashedPassword = user.password
+  // call email function ===> user user.password
+  let authenticated = bcrypt.compareSync(password, hashedPassword); // returns true
   // user is authenticated ==> log the user
-  if (user) {
+  if (user && authenticated) {
     // asking the browser to store the user id in the cookies
     res.cookie('user_id', user.id);
     return res.redirect('/urls');
