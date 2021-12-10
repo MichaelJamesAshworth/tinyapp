@@ -10,9 +10,9 @@
         <a class="nav-item nav-link" href="/urls/new">Create New URL</a>
       </div>
     </div>
-    <% if (userIDFromCookies) { %>
+    <% if (userFromCookies) { %>
       <form class="form-inline" action="/logout" method="POST">
-      <label class ="text-white mr-2">Signed in as: <%= userIDFromCookies.email %></label>
+      <label class ="text-white mr-2">Signed in as: <%= userFromCookies.email %></label>
       <button type="submit" class="btn btn-primary">Logout</button>
       </form>
     <% } else { %>
