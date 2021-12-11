@@ -5,27 +5,27 @@ const bodyParser = require("body-parser");
 const cookieParser = require('cookie-parser');
 const bcrypt = require('bcryptjs');
 const cookieSession = require('cookie-session');
-const {searchForUserEmail, generateRandomString, urlsForUser  } = require('./helper');
+const { searchForUserEmail, generateRandomString, urlsForUser } = require('./helper');
 
-app.use(bodyParser.urlencoded({extended: true}));
+app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(cookieSession({
   name: 'session',
   keys: ['key1'],
 
-  maxAge: 24 * 60 * 60 * 1000 
-}))
+  maxAge: 24 * 60 * 60 * 1000
+}));
 
 app.set('view engine', 'ejs');
 
 const urlDatabase = {
   "b2xVn2": {
-      longURL: "https://www.tsn.ca",
-      userID: "userID"
+    longURL: "https://www.tsn.ca",
+    userID: "userID"
   },
   "9sm5xk": {
-      longURL: "https://www.google.ca",
-      userID: "aJ48lW"
+    longURL: "https://www.google.ca",
+    userID: "aJ48lW"
   }
 };
 
@@ -46,7 +46,7 @@ app.get("/", (req, res) => {
   let userFromCookies = userDatabase[req.session.user_id];
   if (!userFromCookies) {
     return res.redirect('/login');
-  } 
+  }
   return res.redirect('/urls');
 });
 
@@ -55,11 +55,11 @@ app.get("/urls.json", (req, res) => {
 });
 
 app.get('/urls', (req, res) => {
-let userFromCookies = userDatabase[req.session.user_id];
+  let userFromCookies = userDatabase[req.session.user_id];
   if (!userFromCookies) {
     return res.send("It looks like you need to login in order to use this feature");
   }
-  const urls = urlsForUser(urlDatabase, userFromCookies.id)
+  const urls = urlsForUser(urlDatabase, userFromCookies.id);
   const templateVars = { userFromCookies, urls };
   res.render('urls_index', templateVars);
 });
@@ -67,28 +67,28 @@ let userFromCookies = userDatabase[req.session.user_id];
 app.get("/urls/new", (req, res) => {
   //if user isn't logged in, redirect them to /login
   let userFromCookies = userDatabase[req.session.user_id];
-   if (!userFromCookies) {
-     return res.redirect('/login');
-   }
+  if (!userFromCookies) {
+    return res.redirect('/login');
+  }
   const templateVars = { userFromCookies, urls: urlDatabase };
   res.render("urls_new", templateVars);
 });
 
 app.get("/urls/:id", (req, res) => {
   let userFromCookies = userDatabase[req.session.user_id];
-   if (!userFromCookies) {
-     return res.send("It looks like you need to login in order to use this feature");
-   }
-   //if the user is logged in, but does not own the url
-   if (userFromCookies.id !== urlDatabase[req.params.id].userID) {
+  if (!userFromCookies) {
+    return res.send("It looks like you need to login in order to use this feature");
+  }
+  //if the user is logged in, but does not own the url
+  if (userFromCookies.id !== urlDatabase[req.params.id].userID) {
     return res.send("Sorry! It looks like this URL doesn't belong to you");
-   }
+  }
   const templateVars = { userFromCookies, id: req.params.id, longURL: urlDatabase[req.params.id].longURL };
   res.render("urls_show", templateVars);
 });
-  
+
 app.get("/u/:id", (req, res) => {
-  if(!urlDatabase[req.params.id]) {
+  if (!urlDatabase[req.params.id]) {
     return res.send("Sorry! It looks like this URL doesn't exist");
   }
   const longURL = urlDatabase[req.params.id].longURL;
@@ -98,12 +98,8 @@ app.get("/u/:id", (req, res) => {
 //responsible for editing URLS
 app.post('/urls/:id', (req, res) => {
   let shortURL = req.params.id;
-  const userID = req.session.user_id
-  urlsThatUserOwns = urlsForUser(urlDatabase, userID)
+  const userID = req.session.user_id;
   //protect the endpoint from CLI users
-  if (urlsThatUserOwns[shortURL]) {
-  
-  }
   const newLongURL = req.body.longURL;
   urlDatabase[shortURL] = {
     longURL: newLongURL,
@@ -116,12 +112,12 @@ app.post('/urls/:id', (req, res) => {
 app.post('/urls/:id/delete', (req, res) => {
   const shortURL = req.params.id;
   const userID = req.session.user_id;
-  urlsThatUserOwns = urlsForUser(urlDatabase, userID);
+  let urlsThatUserOwns = urlsForUser(urlDatabase, userID);
   //Protecting from CLI users who dont have an account
   if (urlsThatUserOwns[shortURL]) {
     delete urlDatabase[req.params.id];
   } else {
-    return res.send("It looks like you need to logi in order to use this feature")  
+    return res.send("It looks like you need to logi in order to use this feature");
   }
   res.redirect('/urls');
 });
@@ -129,15 +125,15 @@ app.post('/urls/:id/delete', (req, res) => {
 //This form is responsible for creating new urls
 app.post("/urls", (req, res) => {
   //protect the route by introducing conditional
-  const userID = req.session.user_id
-   if (!userID) {
-     return res.send("It looks like you need to login in order to use this feature");
-   }
+  const userID = req.session.user_id;
+  if (!userID) {
+    return res.send("It looks like you need to login in order to use this feature");
+  }
   let shortURL = generateRandomString();
   urlDatabase[shortURL] = {
     longURL: req.body.longURL,
     userID: userID
-  }
+  };
   res.redirect(`/urls/${shortURL}`);
 });
 
@@ -162,7 +158,7 @@ app.post('/register', (req, res) => {
     email,
     password: hashedPassword
   };
-  
+
   for (let userID in userDatabase) {
     const user = userDatabase[userID];
     if (user.email === email) {
@@ -173,9 +169,8 @@ app.post('/register', (req, res) => {
       return;
     }
   }
-  
+
   userDatabase[userID] = newUser;
-  console.log(userDatabase);
   req.session.user_id = userID;
   res.redirect('/urls');
 });
@@ -200,11 +195,11 @@ app.post('/login', (req, res) => {
   if (!user) {
     res.status(400).send(`It looks like this user does not exist`);
   }
-  const hashedPassword = user.password
+  const hashedPassword = user.password;
 
   // call email function ===> user user.password
   let authenticated = bcrypt.compareSync(password, hashedPassword); // returns true
-  
+
   // user is authenticated ==> log the user
   if (user && authenticated) {
     // asking the browser to store the user id in the cookies
@@ -215,14 +210,14 @@ app.post('/login', (req, res) => {
 });
 
 app.post('/logout', (req, res) => {
-req.session = null
-console.log(userDatabase);
-res.redirect('/urls');
+  req.session = null;
+  res.redirect('/urls');
 });
 
 app.get('/*', (req, res) => {
   res.status(404).send("Page not found");
 });
+
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
